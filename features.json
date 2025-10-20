@@ -1,0 +1,18 @@
+[
+  "Age",
+  "FootSide",
+  "Foot_Length_mm",
+  "Foot_Breadth_mm",
+  "Ball_Breadth_mm",
+  "Heel_Breadth_mm",
+  "Toe1_Length_mm",
+  "Toe2_Length_mm",
+  "Toe3_Length_mm",
+  "Toe4_Length_mm",
+  "Toe5_Length_mm",
+  "Midfoot_Width_mm",
+  "Foot_Index_pct",
+  "Arch_Index",
+  "Heel_Angle_deg",
+  "Toe_Angle_deg"
+]
