@@ -12,13 +12,13 @@ WORKDIR /app
 #     build-essential \
 #     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY ../requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
-COPY app.py ./
-COPY features.json ./
-COPY models/ ./models/
+COPY ../app.py ./
+COPY ../features.json ./
+COPY ../models/ ./models/
 
 # Set models directory
 ENV MODEL_DIR=/app/models

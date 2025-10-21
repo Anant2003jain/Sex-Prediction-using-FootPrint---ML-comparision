@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  footprint-gender-api:
+    container_name: footprint-gender-prediction-api
+    image: swikritipal09/footprint-prediction:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_DIR=/app/models
+      - FEATURES_PATH=/app/features.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - footprint-network
+
+networks:
+  footprint-network:
+    name: footprint-network
+    driver: bridge
