@@ -49,9 +49,9 @@ class Prediction(BaseModel):
 
 class PredictResponse(BaseModel):
     ok: bool
+    results: List[Prediction]
     features_order: List[str]
     used_scaler: bool
-    results: List[Prediction]
 
 # --- Helpers ---
 def load_features(features_path: str) -> List[str]:
@@ -135,6 +135,16 @@ def _load_artifacts():
             raise RuntimeError(f"Failed to load scaler from {scaler_path}: {e}")
     else:
         SCALER = None
+    # Load Voting Classifier
+    global VOTING_MODEL
+    voting_path = os.path.join(MODEL_DIR, "voting_classifier.pkl")
+    if os.path.exists(voting_path):
+        try:
+            VOTING_MODEL = joblib.load(voting_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load voting classifier from {voting_path}: {e}")
+    else:
+        VOTING_MODEL = None
 
 # --- Routes ---
 @app.get("/health")
@@ -144,6 +154,7 @@ def health():
         "models_loaded": list(MODELS.keys()),
         "using_scaler": SCALER is not None,
         "features_order": FEATURES_ORDER
+        ,"voting_classifier_loaded": VOTING_MODEL is not None
     }
 
 @app.post("/predict", response_model=PredictResponse)
@@ -175,16 +186,16 @@ def predict(fp: Footprint):
             if isinstance(pred_raw, str):
                 label = str(pred_raw)
             else:
-                # assume 0 -> Male, 1 -> Female
-                label = "Female" if int(pred_raw) == 1 else "Male"
+                # 1 -> Male, 0 -> Female
+                label = "Male" if int(pred_raw) == 1 else "Female"
         else:
             # Fallback
-            label = "Female" if int(y[0]) == 1 else "Male"
+            label = "Male" if int(y[0]) == 1 else "Female"
 
         # Confidence
         proba = try_predict_proba(model, X)
         if proba is not None:
-            conf = float(proba if label.lower() == "female" else 1.0 - proba)
+            conf = float(proba if label.lower() == "male" else 1.0 - proba)
             results.append(Prediction(model=name, predicted_sex=label, confidence=conf, confidence_type="proba"))
             continue
 
@@ -195,4 +206,29 @@ def predict(fp: Footprint):
         else:
             results.append(Prediction(model=name, predicted_sex=label, confidence=None, confidence_type=None))
 
-    return PredictResponse(ok=True, features_order=FEATURES_ORDER, used_scaler=used_scaler, results=results)
+    # Voting Classifier prediction
+    if 'VOTING_MODEL' in globals() and VOTING_MODEL is not None:
+        y_vote = VOTING_MODEL.predict(X)
+        pred_vote = y_vote[0]
+        label_vote = None
+        if hasattr(VOTING_MODEL, "classes_"):
+            if isinstance(pred_vote, str):
+                label_vote = str(pred_vote)
+            else:
+                label_vote = "Male" if int(pred_vote) == 1 else "Female"
+        else:
+            label_vote = "Male" if int(pred_vote) == 1 else "Female"
+
+        # Confidence for voting classifier
+        proba_vote = try_predict_proba(VOTING_MODEL, X)
+        if proba_vote is not None:
+            conf_vote = float(proba_vote if label_vote.lower() == "male" else 1.0 - proba_vote)
+            results.append(Prediction(model="Voting Classifier", predicted_sex=label_vote, confidence=conf_vote, confidence_type="proba"))
+        else:
+            score_vote = try_decision_score(VOTING_MODEL, X)
+            if score_vote is not None:
+                results.append(Prediction(model="Voting Classifier", predicted_sex=label_vote, confidence=score_vote, confidence_type="decision_score"))
+            else:
+                results.append(Prediction(model="Voting Classifier", predicted_sex=label_vote, confidence=None, confidence_type=None))
+
+    return PredictResponse(ok=True, results=results, features_order=FEATURES_ORDER, used_scaler=used_scaler)
