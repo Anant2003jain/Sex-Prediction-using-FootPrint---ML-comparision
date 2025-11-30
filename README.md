@@ -1,10 +1,10 @@
-
 # Sex Prediction API (FastAPI + Docker)
 
 This service loads your trained models (*.pkl) and exposes a `/predict` endpoint
 that returns the predicted sex and a confidence for each model.
 
 ## Project layout
+
 ```
 sex-prediction-api/
 ├─ app.py
@@ -15,7 +15,9 @@ sex-prediction-api/
 ```
 
 ## Place your models
+
 Copy these files into `models/` (filenames must match, or override via env):
+
 - decision_tree.pkl
 - random_forest.pkl
 - xgboost.pkl
@@ -24,17 +26,19 @@ Copy these files into `models/` (filenames must match, or override via env):
 - scaler.pkl  (optional; if present, it's used to standardize inputs)
 
 ## Build & run with Docker
+
 ```bash
-docker build -t sex-prediction-api .
-# Linux/macOS
-docker run --rm -p 8000:8000 -v "$PWD/models:/app/models" sex-prediction-api
-# Windows PowerShell
-docker run --rm -p 8000:8000 -v "${PWD}\models:/app/models" sex-prediction-api
+cd docker/
+
+docker build --no-cache -f Dockerfile -t swikritipal09/footprint-prediction ..
+
+docker run --rm -p 8000:8000 --name footprint-api swikritipal09/footprint-prediction:latest
 ```
 
 Open docs at: http://localhost:8000/docs
 
 ## Example request
+
 ```bash
 curl -X POST "http://localhost:8000/predict" -H "Content-Type: application/json" -d '{
   "Age": 30,
@@ -57,6 +61,7 @@ curl -X POST "http://localhost:8000/predict" -H "Content-Type: application/json"
 ```
 
 ## Notes
+
 - If your SVM was not trained with `probability=True`, it won't provide `predict_proba`. The API will return `confidence_type="decision_score"` instead.
 - Class mapping defaults to `0 -> Male`, `1 -> Female`. If your models output strings already, the API will pass them through.
 - You can change file names or paths using environment variables:

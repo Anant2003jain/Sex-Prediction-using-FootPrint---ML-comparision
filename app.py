@@ -15,31 +15,31 @@ SCALER_FILENAME = os.getenv("SCALER_FILENAME", "scaler.pkl")  # optional
 
 # Expected filenames (adjust via env if your names differ)
 DEFAULT_MODELS = {
-    "Decision Tree": "decision_tree.pkl",
-    "Random Forest": "random_forest.pkl",
-    "XGBoost": "xgboost.pkl",
-    "SVM (RBF Kernel)": "svm_(rbf_kernel).pkl",
-    "Best Tuned Random Forest": "best_random_forest.pkl"
+    "Logistic Regression": "logistic_regression_tuned_model.joblib",
+    "Decision Tree": "decision_tree_tuned_model.joblib",
+    "Random Forest": "random_forest_tuned_model.joblib",
+    "XGBoost": "xgboost_tuned_model.joblib",
+    "SVM (RBF Kernel)": "svm_(rbf_kernel)_tuned_model.joblib"
 }
 
 # --- Schemas ---
 class Footprint(BaseModel):
-    Age: float = Field(..., ge=0, description="Age in years")
     FootSide: str = Field(..., description="Left or Right (case-insensitive)")
-    Foot_Length_mm: float
-    Foot_Breadth_mm: float
-    Ball_Breadth_mm: float
-    Heel_Breadth_mm: float
-    Toe1_Length_mm: float
-    Toe2_Length_mm: float
-    Toe3_Length_mm: float
-    Toe4_Length_mm: float
-    Toe5_Length_mm: float
-    Midfoot_Width_mm: float
-    Foot_Index_pct: float
+    Foot_Length_cm: float
+    Foot_Breadth_cm: float
+    Foot_Index: float
+    Midfoot_Width_cm: float
+    Toe1_Length_cm: float
+    Toe2_Length_cm: float
+    Toe3_Length_cm: float
+    Toe4_Length_cm: float
+    Toe5_Length_cm: float
+    Ball_Breadth_cm: float
+    Breadth_Ball_index: float
+    Heel_Breadth_cm: float
+    Heel_Breadth_Index: float
+    Arch_Length_cm: float
     Arch_Index: float
-    Heel_Angle_deg: float
-    Toe_Angle_deg: float
 
 class Prediction(BaseModel):
     model: str
@@ -137,7 +137,7 @@ def _load_artifacts():
         SCALER = None
     # Load Voting Classifier
     global VOTING_MODEL
-    voting_path = os.path.join(MODEL_DIR, "voting_classifier.pkl")
+    voting_path = os.path.join(MODEL_DIR, "voting_classifier_ensemble_model.joblib")
     if os.path.exists(voting_path):
         try:
             VOTING_MODEL = joblib.load(voting_path)
@@ -147,6 +147,10 @@ def _load_artifacts():
         VOTING_MODEL = None
 
 # --- Routes ---
+@app.get("/")
+def root():
+    return {"message": "Sex Prediction from Footprints API", "version": "1.0.0"}
+
 @app.get("/health")
 def health():
     return {

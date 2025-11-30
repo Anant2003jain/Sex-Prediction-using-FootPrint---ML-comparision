@@ -5,7 +5,7 @@ services:
     container_name: footprint-gender-prediction-api
     image: swikritipal09/footprint-prediction:latest
     ports:
-      - "8000:8000"
+      - "8521:8000"
     environment:
       - MODEL_DIR=/app/models
       - FEATURES_PATH=/app/features.json
